@@ -4,7 +4,7 @@ exports.up = function(knex) {
       table.increments();
       table.string('name').notNullable();
       table.string('initials', 3).notNullable();
-      table.unique(['name', 'initials'])
+      table.unique(['name', 'initials']);
   })
 };
 
