@@ -1,7 +1,7 @@
 module.exports = app => {
     const { existsOrError, notExistsOrError } = app.api.validations;
         
-    const save = (req, res) => {
+    const save = async (req, res) => {
         const category = { ...req.body };
     
         try {
@@ -11,6 +11,14 @@ module.exports = app => {
             return res.status(400).json({ err });
         }
 
+        const checkDepartmentID = await app.db('departments').where({ id: category.department_id }).select('id').first();
+        
+        try {
+            existsOrError(checkDepartmentID, 'Departamento não encontrado')
+        } catch (err) {
+            return res.status(400).json({ err });
+        }
+        
         if (req.params.id) {
             category.id = req.params.id;
 
@@ -24,20 +32,16 @@ module.exports = app => {
                         return res.status(400).json({ err });
                     }
 
-                    return res.status(200).json(category);
+                    return res.status(200).send();
                 })
                 .catch(err => res.status(500).json({
                     userErr: 'Internal Server Error',
                     err
                 }));
         } else {
-            app.db('categories')
-                .returning('id')
+            app.db('categories')                
                 .insert(category)                
-                .then(data => {
-                    category.id = data[0];
-                    return res.status(200).json(category);
-                })
+                .then(() => res.status(200).json(category) )
                 .catch(err => res.status(500).json({
                     userErr: 'Internal Server Error',
                     err

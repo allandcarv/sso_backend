@@ -25,17 +25,13 @@ module.exports = app => {
                     } catch (err) {
                         return res.status(400).json({ err });                        
                     }                    
-                    return res.status(200).json(department);
+                    return res.status(200).send();
                 })
                 .catch(err => res.status(500).json({ err }));
         } else {
-            app.db('departments')
-                .returning('*')
+            app.db('departments')                
                 .insert(department)
-                .then(data => {  
-                    department.id = data[0];                  
-                    return res.status(200).json(department);
-                })
+                .then(() => res.status(200).send() )
                 .catch(err => res.status(500).json({ err }));
         }
     }
