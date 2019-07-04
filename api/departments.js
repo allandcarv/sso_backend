@@ -5,8 +5,8 @@ module.exports = app => {
         const department = { ...req.body };       
 
         try {
-            existsOrError(department.name, 'Missing Department Name');
-            existsOrError(department.initials, 'Missing Department Initials');
+            existsOrError(department.name, 'Faltando nome do Departamento');
+            existsOrError(department.initials, 'Faltando sigla do departamento');
         } catch (err) {
             return res.status(400).json({ err });
         }
@@ -23,8 +23,9 @@ module.exports = app => {
                     try {
                         existsOrError(data, 'Departamento não encontrado');
                     } catch (err) {
-                        res.status(400).json({ err });
-                    }
+                        return res.status(400).json({ err });                        
+                    }                    
+                    return res.status(200).json(department);
                 })
                 .catch(err => res.status(500).json({ err }));
         } else {
@@ -33,21 +34,14 @@ module.exports = app => {
                 .insert(department)
                 .then(data => {  
                     department.id = data[0];                  
-                    res.status(200).json(department);
+                    return res.status(200).json(department);
                 })
                 .catch(err => res.status(500).json({ err }));
         }
     }
 
     const get = async (req, res) => {
-        const limit = 10;
-
-        const result = await app.db('departments')
-            .count('id')
-            .first();
                 
-        const count = result['count(`id`)'];
-        
         if (req.params.id) {
             app.db('departments')
                 .select('*')
@@ -57,13 +51,16 @@ module.exports = app => {
                     try {
                         existsOrError(data, 'Departamento não encontrado');                        
                     } catch (err) {
-                        res.status(400).json({ err });
+                        return res.status(400).json({ err });                        
                     }
 
-                    res.status(200).json(data);
+                    return res.status(200).json(data);
                 })
                 .catch(err => res.status(500).json({ err }));
         } else {
+            const limit = 10;
+            const result = await app.db('departments').count('id').first();                
+            const count = Object.values(result)[0];
             const page = req.query.page || 1;
 
             app.db('departments')
@@ -85,7 +82,7 @@ module.exports = app => {
             notExistsOrError(hasUsers, 'Departamento possui Usuários');
             notExistsOrError(hasCategories, 'Departamento possui Categorias');
         } catch (err) {
-            res.status(400).json({ err });
+            return res.status(400).json({ err });
         }
 
         app.db('departments')
@@ -95,11 +92,10 @@ module.exports = app => {
                 try {
                     existsOrError(rows, 'Departamento Não Encontrado');
                 } catch (err) {
-                    res.status(400).json({ err });
-                    return;
+                    return res.status(400).json({ err });                    
                 }
                 
-                res.status(204).send();
+                return res.status(204).send();
             })
             .catch(err => res.status(500).json({ err }));
     }
