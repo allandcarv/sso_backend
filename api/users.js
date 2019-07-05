@@ -19,27 +19,21 @@ module.exports = app => {
             existsOrError(user.admin, 'Faltando opção de administrador');
             existsOrError(user.department_id, 'Faltando departamento do Usuário');
             equalsOrError(user.password, user.confirmPassword, 'Senhas não conferem');
+
+            const checkDepartmentID = await app.db('departments').where({id: user.department_id}).select('id').first();
+            const checkMail = await app.db('users').select('id').where({ email: user.email }).select('id').first();
+            existsOrError(checkDepartmentID, 'Departamento não encontrado')
+            notExistsOrError(checkMail, 'Email já cadastrado');            
         } catch (err) {
             return res.status(400).json({ err });
         }
         
         user.password = encryptPassword(user.password);
-        delete user.confirmPassword;
-        
-        const checkDepartmentID = await app.db('departments').where({id: user.department_id}).select('id').first();
-        const checkMail = await app.db('users').select('id').where({ email: user.email }).select('id').first();
-        
-        try {
-            existsOrError(checkDepartmentID, 'Departamento não encontrado')
-            notExistsOrError(checkMail, 'Email já cadastrado');
-        } catch (err) {
-            return res.status(400).json({ err });
-        }
+        delete user.confirmPassword;       
 
         app.db('users')
             .insert(user)
-            .then(data => {
-                user.id = data[0];
+            .then(() => {                
                 delete user.password;
                 return res.status(200).send();
             })
