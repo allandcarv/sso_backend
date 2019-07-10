@@ -1,5 +1,8 @@
 module.exports = app => {
+    app.post('/signin', app.api.auth.signin);
+
     app.route('/departments')
+        .all(app.config.passport.authenticate())
         .get(app.api.departments.get)
         .post(app.api.departments.save);
 

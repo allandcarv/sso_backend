@@ -36,8 +36,8 @@ module.exports = app => {
         }
     }
 
-    const get = async (req, res) => {
-                
+    const get = async (req, res) => {                
+        
         if (req.params.id) {
             app.db('departments')
                 .select('*')
