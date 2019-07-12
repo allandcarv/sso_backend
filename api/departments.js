@@ -1,3 +1,5 @@
+const nodemail = require('../config/nodemail');
+
 module.exports = app => {
     const { existsOrError, notExistsOrError } = app.api.validations;
 
@@ -31,7 +33,7 @@ module.exports = app => {
         } else {
             app.db('departments')                
                 .insert(department)
-                .then(() => res.status(200).send() )
+                .then(() => res.status(200).send())
                 .catch(err => res.status(500).json({ err }));
         }
     }
