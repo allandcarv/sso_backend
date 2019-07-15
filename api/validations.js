@@ -3,7 +3,7 @@ module.exports = app => {
         if (!value) throw err;
         if (Array.isArray(value) && value.length() === 0) throw err;
         if (value === Object(value) && Object.keys(value) === 0) throw err;
-        if (typeof value === 'string' && !value.trim()) throw err;
+        if (typeof value === 'string' && !value.trim()) throw err;        
     }
 
     function notExistsOrError (value, err) {

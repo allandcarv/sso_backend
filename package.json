@@ -1,7 +1,7 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "API RESTful para atuar como backend no Sistema de Solicitações Online do CEB-UNICAMP",
   "main": "index.js",
   "scripts": {
     "start": "nodemon"
