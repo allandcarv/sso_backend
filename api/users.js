@@ -78,11 +78,10 @@ module.exports = app => {
             .then(data => {
                 try {
                     existsOrError(data, 'Usuário não encontrado');
+                    return res.status(200).send();
                 } catch (err) {
                     return res.status(404).json({ err });
                 }
-
-                return res.status(200).send();
             })
             .catch(err => res.status(500).json(internalError(err)));
     }
@@ -129,7 +128,7 @@ module.exports = app => {
         const id = req.params.id;
 
         try {
-            const checkArticles = await app.db('solicitations').where({ user_id: id }).whereNull('closing_date').select('id').first();
+            const checkArticles = await app.db('solicitations').where({ user_id: id }).whereNull('closing_date').select('id').limit(1).first();
             notExistsOrError(checkArticles, 'Usuário possui Solicitações');           
             
         } catch (err) {

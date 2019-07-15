@@ -10,8 +10,8 @@ module.exports = app => {
 
     app.route('/departments/:id')
         .all(app.config.passport.authenticate())
-        .get(app.api.departments.get)
-        .put(admin(app.api.departments.save))
+        .get(app.api.departments.getByDepartmentId)
+        .put(admin(app.api.departments.update))
         .delete(admin(app.api.departments.remove));
 
     app.route('/categories')
