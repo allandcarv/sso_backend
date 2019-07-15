@@ -154,9 +154,7 @@ module.exports = app => {
 
     const limit = 10;
     const get = async (req, res) => {
-
-        if (!req.user.admin) return res.status(401).json({ err: 'Usuário sem permissão. ' });
-
+        
         const page = req.query.page || 1
         const result = await app.db('solicitations').whereNull('closing_date').count('id').first();
         const count = Object.values(result)[0];
@@ -254,8 +252,6 @@ module.exports = app => {
     }
 
     const getClosed = async (req, res) => {
-        if (!req.user.admin) return res.status(401).json({ err: 'Usuário sem permissão. ' });
-
         const page = req.query.page || 1;
         const result = await app.db('solicitations').whereNotNull('closing_date').count('id').first();
         const count = Object.values(result)[0];
