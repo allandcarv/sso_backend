@@ -56,10 +56,22 @@ module.exports = app => {
     app.route('/solicitations/:id/close')
         .all(app.config.passport.authenticate())
         .put(app.api.solicitations.close);
-    
+
     app.route('/solicitations/:id')
         .all(app.config.passport.authenticate())
         .get(app.api.solicitations.getById)
         .put(app.api.solicitations.update)
         .delete(app.api.solicitations.remove)
+
+    app.route('/stats/user')
+        .all(app.config.passport.authenticate())
+        .get(app.api.stats.userStats);
+
+    app.route('/stats/operator')
+        .all(app.config.passport.authenticate())
+        .get(app.api.stats.operatorStats);
+
+    app.route('/stats/admin')
+        .all(app.config.passport.authenticate())
+        .get(admin(app.api.stats.adminStats));
 }
