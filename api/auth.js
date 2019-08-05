@@ -18,11 +18,6 @@ module.exports = app => {
             return res.status(401).json({ err: 'Senha inválida '});
         }
 
-        const result = await app.db('categories').where({ department_id: user.department_id }).select('id');        
-
-        category = JSON.parse(JSON.stringify(result));
-        console.log(category[0].id);
-
         const now = Math.floor(Date.now() / 1000); // Converte em segundos
         const exp = now + (60 * 60 * 24); // Validade de 1 dia
 
@@ -30,7 +25,7 @@ module.exports = app => {
             id: user.id,
             name: user.name,
             email: user.email,
-            category: category ? category[0].id : 0,
+            department: user.department_id,
             admin: user.admin,            
             iat: now,
             exp

@@ -33,6 +33,17 @@
     "pm2": "^3.5.1"
   },
   "devDependencies": {
+    "eslint": "^6.1.0",
     "nodemon": "^1.19.1"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [      
+      "eslint:recommended"
+    ],
+    "rules": {}    
   }
 }
