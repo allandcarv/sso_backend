@@ -18,6 +18,8 @@ module.exports = app => {
             return res.status(401).json({ err: 'Senha inválida '});
         }
 
+        const oper = await app.db('categories').where({ 'department_id': user.department_id }).select('id');        
+
         const now = Math.floor(Date.now() / 1000); // Converte em segundos
         const exp = now + (60 * 60 * 24); // Validade de 1 dia
 
@@ -25,7 +27,7 @@ module.exports = app => {
             id: user.id,
             name: user.name,
             email: user.email,
-            department: user.department_id,
+            oper: oper.length ? user.department_id : 0, // if oper = true then send department_id, else send 0;
             admin: user.admin,            
             iat: now,
             exp
@@ -37,5 +39,42 @@ module.exports = app => {
         });
     }
 
-    return { signin };
+    const validateToken = async (req, res) => {
+        const userData = req.body || null;
+        
+        try {
+            if (userData) {
+                const token = jwt.decode(userData.token, authSecret);                
+
+                if (new Date(token.exp * 1000) > new Date()) {                    
+                    return res.status(200).send(true);
+                }
+                
+            }
+        } catch (err) {
+            // problema com o token
+        }
+ 
+        return res.send(false);
+    }
+
+    const validateAdmin = async (req, res) => {
+        const userData = req.body || null;
+
+        try {
+            if (userData) {
+                const token = jwt.decode(userData.token, authSecret);
+
+                if (token.admin) {
+                    return res.status(200).send(true);
+                }
+            }
+        } catch (err) {
+
+        }
+
+        return res.send(false);
+    }
+
+    return { signin, validateToken, validateAdmin };
 }

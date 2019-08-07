@@ -5,7 +5,7 @@ module.exports = app => {
     };
 
     const userStats = async (req, res) => {
-        const userId = req.user.id;
+        const userId = req.params.id;
         
         const closedSolicitations = await app.db('solicitations')
             .where({ user_id: userId})

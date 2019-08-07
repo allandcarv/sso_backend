@@ -60,6 +60,22 @@ module.exports = app => {
             .catch(err => res.status(500).json(internalError(err)));
     }
 
+    const getByDepartmentId = (req, res) => {
+        const departmentId = req.params.id;
+
+        app.db('categories')
+            .select('id', 'name')
+            .where({ 'department_id': departmentId })
+            .then(data => {
+                if (data) {
+                    res.status(200).json({ categories: data });
+                } else {
+                    res.status(404).json({ err: 'Nenhuma categoria encontrada.' });
+                }
+            })
+            .catch(err => res.status(500).json(internalError(err)));
+    }
+
     const update = async (req, res) => {
         const id = req.params.id;
         const category = { ...req.body };
@@ -111,5 +127,5 @@ module.exports = app => {
             .catch(err => res.status(500).json(internalError(err)));
     }
 
-    return { save, get, getByCategoryId, update, remove };
+    return { save, get, getByCategoryId, getByDepartmentId, update, remove };
 }

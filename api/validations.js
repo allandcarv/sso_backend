@@ -21,19 +21,19 @@ module.exports = app => {
     }
 
     async function checkAccess(userId, userDepartment, userAdmin, solicitationId) {
-        const isAdmin = userAdmin;
-        
+        const isAdmin = userAdmin;        
+
         const result = await app.db({ s: 'solicitations'})
             .where({ 's.id': solicitationId })
             .join({ c: 'categories' }, 's.category_id', '=', 'c.id')
             .select('s.user_id', 'c.department_id')
             .limit(1)
-            .first()            
+            .first();                   
 
         if (result) {
             const isUser = result.user_id === userId;
-            const isOperator = result.department_id === userDepartment;
-            
+            const isOperator = result.department_id === userDepartment;           
+
             return (isUser || isOperator || isAdmin);
         } else {
             return 404;

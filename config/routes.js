@@ -2,6 +2,8 @@ const admin = require('./admin');
 
 module.exports = app => {
     app.post('/signin', app.api.auth.signin);
+    app.post('/validateToken', app.api.auth.validateToken);
+    app.post('/validateAdmin', app.api.auth.validateAdmin);
 
     app.route('/departments')
         .all(app.config.passport.authenticate())
@@ -18,6 +20,10 @@ module.exports = app => {
         .all(app.config.passport.authenticate())
         .get(app.api.categories.get)
         .post(admin(app.api.categories.save));
+
+    app.route('/categories/department/:id')
+        //.all(app.config.passport.authenticate())
+        .get(app.api.categories.getByDepartmentId);
 
     app.route('/categories/:id')
         .all(app.config.passport.authenticate())
@@ -68,7 +74,7 @@ module.exports = app => {
         .delete(app.api.solicitations.remove)
 
     app.route('/stats/user/:id')
-        .all(app.config.passport.authenticate())
+        //.all(app.config.passport.authenticate())
         .get(app.api.stats.userStats);
 
     app.route('/stats/operator/:id')
@@ -77,5 +83,5 @@ module.exports = app => {
 
     app.route('/stats/admin')
         .all(app.config.passport.authenticate())
-        .get(admin(app.api.stats.adminStats));
+        .get(app.api.stats.adminStats);
 }

@@ -97,19 +97,16 @@ module.exports = app => {
     }
 
     const update = async (req, res) => {                
-        const solicitation = { ...req.body };
-        solicitation.id = req.params.id;
-        
-        if (req.user.id !== solicitation.user_id) {
-            return res.status(401).json({ err: 'Usuário não autorizado' });
-        }
+        const solicitation = { 
+            subject: req.body.subject,
+            description: req.body.description,
+            expected_date: req.body.expected_date ? moment(req.body.expected_date).format('YYYY-MM-DD') : null
+        };
+        solicitation.id = req.params.id;        
 
-        try {            
-            notExistsOrError(solicitation.opening_date, 'Campo não permitido');            
-            notExistsOrError(solicitation.category_id, 'Campo não permitido');
-        } catch (err) {
-            return res.status(400).json({ err });
-        }
+        if (req.user.id !== req.body.user_id) {
+            return res.status(401).json({ err: 'Usuário não autorizado' });
+        }        
 
         app.db('solicitations')
             .where({ id: solicitation.id })
@@ -197,7 +194,7 @@ module.exports = app => {
         app.db({ s: 'solicitations' })
             .join('categories', 'categories.id', '=', 's.category_id')
             .join('users', 'users.id', '=', 's.user_id')                
-            .select('s.id', 's.ticket', 's.subject', 's.opening_date', 's.expected_date', 's.user_id', 's.category_id')
+            .select('s.id', 's.ticket', 's.subject', 's.opening_date', 's.expected_date', 's.closing_date', 's.user_id', 's.category_id')
             .select({ categoryName: 'categories.name' }, { userName: 'users.name' })                
             .whereNotNull('closing_date')
             .where(queryBuilder)
@@ -255,7 +252,7 @@ module.exports = app => {
             .whereNull('closing_date')
             .join('categories', 'categories.id', '=', 's.category_id')
             .join('users', 'users.id', '=', 's.user_id')
-            .select('s.id', 's.ticket', 's.subject', 's.description', 's.opening_date', 's.expected_date')
+            .select('s.id', 's.ticket', 's.subject', 's.description', 's.opening_date', 's.expected_date', 's.user_id')
             .select({ categoryName: 'categories.name' })
             .select({ userName: 'users.name' })            
             .limit(1)
@@ -332,7 +329,7 @@ module.exports = app => {
             app.db({ s: 'solicitations' })
                 .join('categories', 'categories.id', '=', 's.category_id')
                 .join('users', 'users.id', '=', 's.user_id')                
-                .select('s.id', 's.ticket', 's.subject', 's.opening_date', 's.expected_date', 's.user_id', 's.category_id')
+                .select('s.id', 's.ticket', 's.subject', 's.opening_date', 's.expected_date', 's.closing_date', 's.user_id', 's.category_id')
                 .select({ categoryName: 'categories.name' }, { userName: 'users.name' })                
                 .whereNotNull('closing_date')
                 .limit(limit).offset(page * limit - limit)
@@ -346,9 +343,9 @@ module.exports = app => {
 
         const hasAccess = await checkAccess(req.user.id, req.user.department, req.user.admin, solicitationId);
         
-        if (hasAccess === 404) {
+        if (hasAccess === 404) {            
             return res.status(404).json({ err: 'Solicitação não encontrada' });
-        } else if (!hasAccess) {
+        } else if (!hasAccess) {            
             return res.status(401).json({ err: 'Usuário sem permissão.' });
         }
 
@@ -356,18 +353,18 @@ module.exports = app => {
             .where({ 's.id': solicitationId })
             .whereNotNull('closing_date')
             .join('categories', 'categories.id', '=', 's.category_id')
-            .join('users', 'users.id', '=', 's.user_id')
-            .select('s.id', 's.ticket', 's.subject', 's.description', 's.opening_date', 's.expected_date')
+            .join('users', 'users.id', '=', 's.operator_id')
+            .select('s.id', 's.ticket', 's.subject', 's.description', 's.opening_date', 's.expected_date', 's.closing_date')
             .select({ categoryName: 'categories.name' })
-            .select({ userName: 'users.name' })            
+            .select({ operatorName: 'users.name' })            
             .limit(1)
             .first()
             .then(data => {
                 try {
-                    existsOrError(data, 'Solicitação não encontrada');
+                    existsOrError(data, 'AQUI: Solicitação não encontrada');
                     return res.status(200).json(data);
                 } catch (err) {
-                    return res.status(404).json({ err: 'Solicitação não encontrada' });
+                    return res.status(404).json({ err });
                 }
             })
             .catch(err => res.status(500).json(internalError(err)));
@@ -402,7 +399,7 @@ module.exports = app => {
             app.db({ s: 'solicitations' })
                 .join('categories', 'categories.id', '=', 's.category_id')
                 .join('users', 'users.id', '=', 's.user_id')                
-                .select('s.id', 's.ticket', 's.subject', 's.opening_date', 's.expected_date', 's.user_id', 's.category_id')
+                .select('s.id', 's.ticket', 's.subject', 's.opening_date', 's.expected_date', 's.closing_date', 's.user_id', 's.category_id')
                 .select({ categoryName: 'categories.name' }, { userName: 'users.name' }) 
                 .where({ 's.user_id': userId })               
                 .whereNotNull('closing_date')
@@ -441,17 +438,10 @@ module.exports = app => {
 
 
         app.db('solicitations')
-            .where({ solicitationId })
+            .where({ id: solicitationId })
             .whereNull('closing_date')
             .update(solicitation)
-            .then(data => {
-                try {
-                    existsOrError(data, 'Solicitação não encontrada');
-                    return res.status(200).send();
-                } catch (err) {
-                    res.status(404).json({ err });
-                }
-            })
+            .then(() => res.status(200).send())
             .catch(err => res.status(500).json(internalError(err)));
 
         const resultSolicitation = await app.db({ s: 'solicitations' })
@@ -459,7 +449,7 @@ module.exports = app => {
             .join({ d: 'departments ' }, 'c.department_id', '=', 'd.id')
             .join({ u: 'users' }, 's.user_id', '=', 'u.id')
             .join({ o: 'users' }, 'd.id', '=', 'o.department_id')
-            .where({ 's.id': id })
+            .where({ 's.id': solicitationId })
             .whereNotNull('s.closing_date')
             .select({ userName: 'u.name' }, { userEmail: 'u.email' }, { operatorMail: 'o.email' }, { solicitationId: 's.id' }, 's.ticket')
             .catch(err => res.status(500).json(internalError(err)));
@@ -520,17 +510,9 @@ module.exports = app => {
         }
 
         app.db('solicitations')
-            .where({ solicitationId })
+            .where({ id: solicitationId })
             .del()
-            .then(data => {
-                try {
-                    existsOrError(data, 'Solicitação não encontrada');
-                } catch (err) {
-                    return res.status(404).json({ err });
-                }
-
-                return res.status(200).send();
-            })
+            .then(() => res.status(200).send())
             .catch(err => res.status(500).json(internalError(err)));
     }
 
