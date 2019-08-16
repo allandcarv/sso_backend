@@ -7,14 +7,14 @@ module.exports = app => {
 
     app.route('/departments')
         .all(app.config.passport.authenticate())
-        .get(app.api.departments.get)
+        .get(admin(app.api.departments.get))
         .post(admin(app.api.departments.save));
 
     app.route('/departments/:id')
         .all(app.config.passport.authenticate())
-        .get(app.api.departments.getByDepartmentId)
+        .get(admin(app.api.departments.getByDepartmentId))
         .put(admin(app.api.departments.update))
-        .delete(admin(app.api.departments.remove));
+        .delete(app.api.departments.remove);
 
     app.route('/categories')
         .all(app.config.passport.authenticate())
@@ -22,7 +22,7 @@ module.exports = app => {
         .post(admin(app.api.categories.save));
 
     app.route('/categories/department/:id')
-        //.all(app.config.passport.authenticate())
+        .all(app.config.passport.authenticate())
         .get(app.api.categories.getByDepartmentId);
 
     app.route('/categories/:id')
@@ -36,6 +36,10 @@ module.exports = app => {
         .get(admin(app.api.users.get))
         .post(admin(app.api.users.save));
 
+    app.route('/users/:id/setadmin')
+        .all(app.config.passport.authenticate())
+        .put(admin(app.api.users.setAdmin))
+        
     app.route('/users/:id')
         .all(app.config.passport.authenticate())
         .get(app.api.users.getByUserId)
@@ -74,7 +78,7 @@ module.exports = app => {
         .delete(app.api.solicitations.remove)
 
     app.route('/stats/user/:id')
-        //.all(app.config.passport.authenticate())
+        .all(app.config.passport.authenticate())
         .get(app.api.stats.userStats);
 
     app.route('/stats/operator/:id')

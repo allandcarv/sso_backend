@@ -32,21 +32,23 @@ module.exports = app => {
         const count = Object.values(result)[0];
         const page = req.query.page || 1
 
-        app.db('categories')
-            .select('*')
+        app.db({ c: 'categories'})
+            .join('departments', 'departments.id', '=', 'c.department_id')
+            .select('c.*', { departmentName: 'departments.name' })
             .limit(limit).offset(page * limit - limit)
             .orderBy('id')
-            .then(data => res.status(200).json(data, count, limit))
+            .then(data => res.status(200).json({ data, count, limit }))
             .catch(err => res.status(500).json(internalError(err)))
 
     }
 
     const getByCategoryId = (req, res) => {
-        const id = req.params.id;
+        const categoryId = req.params.id;
 
         app.db('categories')
-            .where({ id })
-            .select('*')
+            .where({ 'categories.id': categoryId })
+            .join('departments', 'departments.id', '=', 'categories.department_id')
+            .select('categories.*', { departmentName: 'departments.name' })
             .limit(1)
             .first()
             .then(data => {
@@ -78,11 +80,9 @@ module.exports = app => {
 
     const update = async (req, res) => {
         const id = req.params.id;
-        const category = { ...req.body };
+        const category = { name: req.body.name };
         
-        try {
-            notExistsOrError(category.id, 'Campo não permitido');
-                        
+        try {           
             const hasSolicitations = await app.db('solicitations').where({ category_id: id }).select('id').limit(1).first().catch(err => res.status(500).json(internalError(err)));            
             notExistsOrError(hasSolicitations, 'Categoria possui solicitações, não pode ser alterada');            
         } catch (err) {

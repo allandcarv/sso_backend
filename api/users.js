@@ -42,18 +42,34 @@ module.exports = app => {
 
     }
 
-    const update = async (req, res) => {
-        const user = { ...req.body };
-        const id = req.params.id;
+    const update = async (req, res) => {        
+        const user = { 
+            id: req.body.id,
+            name: req.body.name,
+            email: req.body.email,
+            admin: req.body.admin,
+            password: req.body.password,
+            confirmPassword: req.body.confirmPassword    
+        };
 
-        if (!req.user.admin && req.user.id != id) return res.status(401).json({ err: 'Usuário sem permissão. '});
+        if (user.hasOwnProperty('password') && !user.password ) {
+            delete user.password;
+        }
+
+        if (user.hasOwnProperty('confirmPassword') && !user.password ) {
+            delete user.confirmPassword;
+        }
+
+        const id = parseInt(req.params.id);                               
+        
+        if (!req.user.admin && req.user.id != id) return res.status(401).json({ err: 'Usuário sem permissão. '});        
 
         try {
-            notExistsOrError(user.id, 'Campo não permitido');
+            equalsOrError(user.id, id, 'Não é permitido alterar ID do usuário');
             notExistsOrError(user.deleted_at, 'Campo não permitido')
 
             if (user.email) {
-                const userFromDB = await app.db('users').select('*').where({ email: user.email }).first();
+                const userFromDB = await app.db('users').select('*').where({ email: user.email }).whereNot({ id: user.id }).limit(1).first();
                 notExistsOrError(userFromDB, 'Usuário já cadastrado');
             }
 
@@ -64,7 +80,7 @@ module.exports = app => {
 
         } catch (err) {
             return res.status(400).json({ err });
-        }
+        }        
 
         if (user.password) {
             user.password = encryptPassword(user.password);
@@ -86,15 +102,36 @@ module.exports = app => {
             .catch(err => res.status(500).json(internalError(err)));
     }
 
+    const setAdmin = async (req, res) => {
+        const userId = req.params.id;
+        const user = { admin: req.body.admin };
+
+        app.db('users')
+            .update(user)
+            .where({ id: userId })
+            .whereNull('deleted_at')
+            .then(data => {
+                try {
+                    existsOrError(data, 'Usuário não encontrado');
+                    return res.status(200).send();
+                } catch (err) {
+                    return res.status(404).json({ err });
+                }
+            })
+            .catch(err => res.status(500).json(internalError(err)));
+            
+    }
+
     const get = async (req, res) => {
         const limit = 10;
         const page = req.query.page || 1;
         const result = await app.db('users').whereNull('deleted_at').count('id').first();
         const count = Object.values(result)[0];
 
-        app.db('users')
+        app.db({ u: 'users' })
             .whereNull('deleted_at')
-            .select('id', 'name', 'email', 'admin', 'department_id')
+            .join('departments', 'departments.id', '=', 'u.department_id')
+            .select('u.id', 'u.name', 'u.email', 'u.admin', 'u.department_id', { departmentName: 'departments.name' })
             .limit(limit).offset(page * limit - limit)
             .orderBy('id')
             .then(data => res.status(200).json({ data, count, limit }))
@@ -107,10 +144,11 @@ module.exports = app => {
 
         if (!req.user.admin && req.user.id != id) return res.status(401).json({ err: 'Usuário sem permissão. '});
 
-        app.db('users')
-            .select('id', 'name', 'email', 'admin', 'department_id')
+        app.db({ u: 'users' })
+            .select('u.id', 'u.name', 'u.email', 'u.admin', 'u.department_id', {departmentName: 'departments.name' })
             .whereNull('deleted_at')
-            .where({ id })
+            .where({ 'u.id': id })
+            .join('departments', 'departments.id', '=', 'u.department_id')            
             .limit(1)
             .first()
             .then(data => {
@@ -137,7 +175,7 @@ module.exports = app => {
 
         app.db('users')
             .where({ id })
-            .whereNull('closing_date')
+            .whereNull('deleted_at')
             .update({ deleted_at: new Date() })
             .then(data => {
                 try {
@@ -150,5 +188,5 @@ module.exports = app => {
             .catch(err => res.status(500).json(internalError(err)));
     }
 
-    return { save, update, get, getByUserId, remove };
+    return { save, update, setAdmin, get, getByUserId, remove };
 }

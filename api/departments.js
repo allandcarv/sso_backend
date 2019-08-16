@@ -2,7 +2,7 @@ module.exports = app => {
     const { existsOrError, notExistsOrError } = app.api.validations;
 
     const internalError = err => {
-        return { userErr: 'Internal Server Error', err };
+        return { err: 'Internal Server Error', err };
     };
 
     const save = (req, res) => {
@@ -20,17 +20,18 @@ module.exports = app => {
         app.db('departments')                
             .insert(department)
             .then(() => res.status(200).send())
-            .catch(err => res.status(500).json(internalError(err)));
+            .catch(err => {
+                console.log(err);    
+                res.status(500).send(err)
+            });
         
     }
 
     const update = async (req, res) => {
         const id = req.params.id;
-        const department = { ...req.body };
+        const department = { name: req.body.name, initials: req.body.initials };
 
-        try {
-            notExistsOrError(department.id, 'Campo não permitido');
-
+        try {            
             const hasUsers = await app.db('users')
                 .whereNull('deleted_at')
                 .where({ department_id: id })

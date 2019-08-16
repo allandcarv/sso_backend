@@ -353,15 +353,17 @@ module.exports = app => {
             .where({ 's.id': solicitationId })
             .whereNotNull('closing_date')
             .join('categories', 'categories.id', '=', 's.category_id')
-            .join('users', 'users.id', '=', 's.operator_id')
+            .join({ o: 'users'} , 'o.id', '=', 's.operator_id')
+            .join({ u: 'users'} , 'u.id', '=', 's.user_id')
             .select('s.id', 's.ticket', 's.subject', 's.description', 's.opening_date', 's.expected_date', 's.closing_date')
             .select({ categoryName: 'categories.name' })
-            .select({ operatorName: 'users.name' })            
+            .select({ operatorName: 'o.name' })            
+            .select({ userName: 'u.name' })            
             .limit(1)
             .first()
             .then(data => {
                 try {
-                    existsOrError(data, 'AQUI: Solicitação não encontrada');
+                    existsOrError(data, 'Solicitação não encontrada');
                     return res.status(200).json(data);
                 } catch (err) {
                     return res.status(404).json({ err });
