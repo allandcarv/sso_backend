@@ -41,9 +41,9 @@
     "env": {
       "node": true
     },
-    "extends": [      
+    "extends": [
       "eslint:recommended"
     ],
-    "rules": {}    
+    "rules": {}
   }
 }
