@@ -39,7 +39,7 @@ module.exports = app => {
     app.route('/users/:id/setadmin')
         .all(app.config.passport.authenticate())
         .put(admin(app.api.users.setAdmin))
-        
+
     app.route('/users/:id')
         .all(app.config.passport.authenticate())
         .get(app.api.users.getByUserId)
@@ -50,26 +50,34 @@ module.exports = app => {
         .all(app.config.passport.authenticate())
         .get(admin(app.api.solicitations.get))
         .post(app.api.solicitations.save)
-    
+
     app.route('/solicitations/closed')
         .all(app.config.passport.authenticate())
-        .get(admin(app.api.solicitations.getClosed));        
-        
+        .get(admin(app.api.solicitations.getClosed));
+
     app.route('/solicitations/closed/:id')
         .all(app.config.passport.authenticate())
-        .get(app.api.solicitations.getClosedById);    
-           
+        .get(app.api.solicitations.getClosedById);
+
     app.route('/solicitations/user/:id/closed')
         .all(app.config.passport.authenticate())
         .get(app.api.solicitations.getClosedByUserId);
-    
+
     app.route('/solicitations/user/:id')
         .all(app.config.passport.authenticate())
-        .get(app.api.solicitations.getByUserId);    
+        .get(app.api.solicitations.getByUserId);
+
+    app.route('/solicitations/department/:id/closed')
+        .all(app.config.passport.authenticate())
+        .get(app.api.solicitations.getClosedByDepartmentId)
+        
+    app.route('/solicitations/department/:id')
+        .all(app.config.passport.authenticate())
+        .get(app.api.solicitations.getByDepartmentId);
 
     app.route('/solicitations/:id/close')
         .all(app.config.passport.authenticate())
-        .put(app.api.solicitations.close);   
+        .put(app.api.solicitations.close);
 
     app.route('/solicitations/:id')
         .all(app.config.passport.authenticate())

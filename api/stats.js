@@ -34,38 +34,32 @@ module.exports = app => {
 
     const operatorStats = async (req, res) => {
         
-        if (!req.user.operator) return res.status(401).json({ err: 'Usuário sem permissão.' });
+        if (!req.user.oper) return res.status(401).json({ err: 'Usuário sem permissão.' });
 
-        const departmentId = req.user.operator;
+        const departmentId = parseInt(req.params.id);
 
         const closedSolicitations = await app.db({ s: 'solicitations' })
             .whereNotNull('s.closing_date')
-            .join({ c: 'categories' }, 's.category_id', '=', 'c.id')
-            .join({ d: 'departments' }, 'c.department_id', '=', 'd.id')
-            .count('s.id')
-            .where({ 'd.id': departmentId })
+            .join({ c: 'categories' }, 'c.department_id', '=', departmentId)            
+            .count('s.id')            
             .first()
             .catch(err => res.status(500).json(internalError(err)));
 
         const openByCategory = await app.db({ s: 'solicitations'})
             .whereNull('s.closing_date')
-            .join({ c: 'categories' }, 's.category_id', '=', 'c.id')
-            .join({ d: 'departments' }, 'c.department_id', '=', 'd.id')
+            .join({ c: 'categories' }, 'c.department_id', '=', departmentId)
             .select({ categoria: 'c.name' })
-            .count({ total: 's.id' })
-            .where({ 'd.id': departmentId })
-            .groupBy('s.category_id')
+            .count({ total: 'c.id' })            
+            .groupBy('c.id')
             .catch(err => res.status(500).json(internalError(err)));
         
         const openByUser = await app.db({ s: 'solicitations' })
-            .whereNull('s.closing_date')
-            .join({ c: 'categories' }, 's.category_id', '=', 'c.id')
-            .join({ d: 'departments' }, 'c.department_id', '=', 'd.id')
-            .join({ u: 'users'}, 's.user_id', '=', 'u.id')
+            .whereNull('s.closing_date') 
+            .join({ c: 'categories'}, 'c.department_id', '=', departmentId)                       
+            .join({ u: 'users'}, 'u.id', '=', 's.user_id')
             .select({ usuario: 'u.name' })
-            .count({ total: 's.id' })
-            .where({ 'd.id': departmentId })
-            .groupBy('s.user_id')
+            .count({ total: 'u.id' })            
+            .groupBy('u.name')
             .catch(err => res.status(500).json(internalError(err)));
         
         const openSolicitations = openByCategory.reduce((acc, act) => acc + act.total, 0);
